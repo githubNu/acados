@@ -31,9 +31,9 @@
 % POSSIBILITY OF SUCH DAMAGE.;
 %
 
-function compile_main()
-    return_dir = pwd;
-    cd c_generated_code
+function compile_main(codegen_dir)
+    return_dir = pwd();
+    cd(codegen_dir)
     %% build main file
     if isunix || ismac 
         [ status, result ] = system('make');
@@ -67,7 +67,6 @@ function compile_main()
             % get env vars for MSVC
             msvc_env = fullfile(mexOpts.Location, 'VC\Auxiliary\Build\vcvars64.bat');
             assert(isfile(msvc_env), 'Cannot find definition of MSVC env vars.');
-
             make_cmd = sprintf('"%s" & nmake', msvc_env);
 
             % TODO
@@ -80,13 +79,13 @@ function compile_main()
         end
 
         % compile
-        [ status, result ] = system(make_cmd);
+        [status, result] = system(make_cmd);
         if status
             cd(return_dir);
             error('Building templated code failed.\nGot status %d, result: %s',...
                   status, result);
         end
-        [ status, result ] = system(sprintf('%s shared_lib', make_cmd));
+        [status, result] = system(sprintf('%s shared_lib', make_cmd));
         if status
             cd(return_dir);
             error('Building templated code as shared library failed.\nGot status %d, result: %s',...

@@ -31,10 +31,11 @@
 % POSSIBILITY OF SUCH DAMAGE.;
 %
 
-function ocp_generate_c_code(obj)
+function ocp_generate_c_code(obj, output_dir)
     %% create folder
-    if ~exist(fullfile(pwd,'c_generated_code'), 'dir')
-        mkdir(fullfile(pwd, 'c_generated_code'))
+    codegendir = fullfile(pwd(), output_dir, 'c_generated_code');
+    if ~exist(codegendir, 'dir')
+        mkdir(codegendir)
     end
     %% generate C code for CasADi functions / copy external functions
     % dynamics
@@ -50,46 +51,57 @@ function ocp_generate_c_code(obj)
                 obj.acados_ocp_nlp_json.model);
         end
     elseif (strcmp(obj.model_struct.dyn_type, 'discrete'))
-        generate_c_code_disc_dyn(obj.acados_ocp_nlp_json.model);
+        generate_c_code_disc_dyn(obj.acados_ocp_nlp_json.model, ...
+            codegendir);
     end
     if strcmp(obj.acados_ocp_nlp_json.model.dyn_ext_fun_type, 'generic')
-        copyfile( fullfile(pwd, obj.acados_ocp_nlp_json.model.dyn_source_discrete),...
-            fullfile(pwd, 'c_generated_code', [obj.model_struct.name '_model']));
+        copyfile(fullfile(pwd, obj.acados_ocp_nlp_json.model.dyn_source_discrete),...
+            fullfile(codegendir, [obj.model_struct.name '_model']));
     end
 
     % cost
     if (strcmp(obj.model_struct.cost_type, 'nonlinear_ls') || ...
         strcmp(obj.model_struct.cost_type_0, 'nonlinear_ls') || strcmp(obj.model_struct.cost_type_e, 'nonlinear_ls'))
-        generate_c_code_nonlinear_least_squares( obj.model_struct, obj.opts_struct,...
-              fullfile(pwd, 'c_generated_code', [obj.model_struct.name '_cost']) );
+        generate_c_code_nonlinear_least_squares( obj.model_struct, obj.opts_struct, ...
+            fullfile(codegendir, [obj.model_struct.name '_cost']));
     elseif (strcmp(obj.model_struct.cost_type, 'ext_cost') || ...
             strcmp(obj.model_struct.cost_type_0, 'ext_cost') || strcmp(obj.model_struct.cost_type_e, 'ext_cost'))
-            generate_c_code_ext_cost( obj.model_struct, obj.opts_struct,...
-              fullfile(pwd, 'c_generated_code', [obj.model_struct.name '_cost']) );
+            generate_c_code_ext_cost( obj.model_struct, obj.opts_struct, ...
+                fullfile(codegendir, [obj.model_struct.name '_cost']));
     end
     if (strcmp(obj.acados_ocp_nlp_json.cost.cost_ext_fun_type_0, 'generic'))
         copyfile(fullfile(pwd, obj.acados_ocp_nlp_json.cost.cost_source_ext_cost_0), ...
-            fullfile(pwd, 'c_generated_code', [obj.model_struct.name '_cost']));
+            fullfile(codegendir, [obj.model_struct.name '_cost']));
     end
     if (strcmp(obj.acados_ocp_nlp_json.cost.cost_ext_fun_type, 'generic'))
         copyfile(fullfile(pwd, obj.acados_ocp_nlp_json.cost.cost_source_ext_cost), ...
-            fullfile(pwd, 'c_generated_code', [obj.model_struct.name '_cost']));
+            fullfile(codegendir, [obj.model_struct.name '_cost']));
     end
     if (strcmp(obj.acados_ocp_nlp_json.cost.cost_ext_fun_type_e, 'generic'))
         copyfile(fullfile(pwd, obj.acados_ocp_nlp_json.cost.cost_source_ext_cost_e), ...
-            fullfile(pwd, 'c_generated_code', [obj.model_struct.name '_cost']));
+            fullfile(codegendir, [obj.model_struct.name '_cost']));
     end
     % constraints
     if ((strcmp(obj.model_struct.constr_type, 'bgh') && obj.model_struct.dim_nh > 0) || ...
         (strcmp(obj.model_struct.constr_type_e, 'bgh') && obj.model_struct.dim_nh_e > 0))
-        generate_c_code_nonlinear_constr( obj.model_struct, obj.opts_struct,...
-              fullfile(pwd, 'c_generated_code', [obj.model_struct.name '_constraints']) );
+        generate_c_code_nonlinear_constr( obj.model_struct, obj.opts_struct, ...
+            fullfile(codegendir, [obj.model_struct.name '_constraints']) );
     end
 
     % set include and lib path
-    acados_folder = getenv('ACADOS_INSTALL_DIR');
-    obj.acados_ocp_nlp_json.acados_include_path = [acados_folder, '/include'];
-    obj.acados_ocp_nlp_json.acados_lib_path = [acados_folder, '/lib'];
+    tmp = load('acados_root_dir.mat');
+    if isempty(tmp)
+      error('acados cannot be found on MATLAB path')
+    else
+      acados_folder = tmp.root_dir;
+    end
+    obj.acados_ocp_nlp_json.acados_path = acados_folder;
+    obj.acados_ocp_nlp_json.acados_include_path = fullfile(acados_folder);
+    compiler_config = mex.getCompilerConfigurations('C');
+    gcc = fullfile(compiler_config.Location, 'bin', 'gcc');
+    obj.acados_ocp_nlp_json.system_c_compiler = gcc;
+    obj.acados_ocp_nlp_json.acados_lib_path = fullfile(acados_folder, ...
+        'lib');
 
     %% remove CasADi objects from model
     model.name = obj.acados_ocp_nlp_json.model.name;
@@ -146,9 +158,8 @@ function ocp_generate_c_code(obj)
     obj.acados_ocp_nlp_json.cost = cost;
 
     %% load JSON layout
-    acados_folder = getenv('ACADOS_INSTALL_DIR');
-    json_layout_filename = fullfile(acados_folder, 'interfaces',...
-                                   'acados_template','acados_template','acados_layout.json');
+    json_layout_filename = fullfile(acados_folder, 'interfaces', ...
+        'acados_template', 'acados_template', 'acados_layout.json');
     % if is_octave()
     addpath(fullfile(acados_folder, 'external', 'jsonlab'))
     acados_layout = loadjson(fileread(json_layout_filename));
@@ -242,7 +253,8 @@ function ocp_generate_c_code(obj)
     obj.acados_ocp_nlp_json.solver_options = opts;
 
     % parameter values
-    obj.acados_ocp_nlp_json.parameter_values = reshape(num2cell(obj.acados_ocp_nlp_json.parameter_values), [ 1, dims.np]);
+    obj.acados_ocp_nlp_json.parameter_values = reshape(num2cell( ...
+        obj.acados_ocp_nlp_json.parameter_values), [1, dims.np]);
 
     %% dump JSON file
     % if is_octave()
@@ -270,14 +282,13 @@ function ocp_generate_c_code(obj)
     % else % Matlab
     %     json_string = jsonencode(obj.acados_ocp_nlp_json);
     % end
-    fid = fopen('acados_ocp_nlp.json', 'w');
-    if fid == -1, error('Cannot create JSON file'); end
+    template_file = fullfile(codegendir, 'acados_ocp_nlp.json');
+    fid = fopen(template_file, 'w');
+    if (fid == -1); error('Cannot create JSON file'); end
     fwrite(fid, json_string, 'char');
     fclose(fid);
     %% render templated code
-    acados_template_mex.render_acados_templates('acados_ocp_nlp.json')
-    if ~ispc
-        %% compile main
-        acados_template_mex.compile_main()
-    end
+    acados_template_mex.render_acados_templates(template_file, codegendir);
+    %% compile main
+    acados_template_mex.compile_main(codegendir)
 end

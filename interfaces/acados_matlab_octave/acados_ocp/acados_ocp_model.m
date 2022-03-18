@@ -37,9 +37,7 @@ classdef acados_ocp_model < handle
         model_struct
     end % properties
 
-
     methods
-
         function obj = acados_ocp_model()
             % model structure
             obj.model_struct = struct;
@@ -57,16 +55,12 @@ classdef acados_ocp_model < handle
             obj.model_struct.constr_type_e = 'bgh';
         end
 
-
-
         function obj = set(obj, field, value)
-
             % check for module name
             tokens = strsplit(field, '_');
 
             % symbolics
             if (strcmp(tokens{1}, 'sym'))
-
                 if (strcmp(field, 'sym_x'))
                     obj.model_struct.sym_x = value;
                 elseif (strcmp(field, 'sym_xdot'))
@@ -84,7 +78,6 @@ classdef acados_ocp_model < handle
 
             % cost
             elseif (strcmp(tokens{1}, 'cost'))
-
                 if (strcmp(field, 'cost_type'))
                     obj.model_struct.cost_type = value;
                 elseif (strcmp(field, 'cost_type_e'))
@@ -196,7 +189,6 @@ classdef acados_ocp_model < handle
 
             % dynamics
             elseif (strcmp(tokens{1}, 'dyn'))
-
                 if (strcmp(field, 'dyn_type'))
                     obj.model_struct.dyn_type = value;
                 elseif (strcmp(field, 'dyn_expr_f'))
@@ -221,17 +213,15 @@ classdef acados_ocp_model < handle
 
             % constraints
             elseif (strcmp(tokens{1}, 'constr'))
-
                 if (strcmp(field, 'constr_type'))
                     obj.model_struct.constr_type = value;
                 elseif (strcmp(field, 'constr_type_e'))
                     obj.model_struct.constr_type_e = value;
-
-                % initial state constraint
                 elseif (strcmp(field, 'constr_x0'))
+                    % initial state constraint
                     obj.model_struct.constr_lbx_0 = value;
                     obj.model_struct.constr_ubx_0 = value;
-                    obj.model_struct.constr_Jbx_0 = eye( length(value) );
+                    obj.model_struct.constr_Jbx_0 = eye(length(value));
                     obj.model_struct.constr_idxbxe_0 = linspace(0,length(value)-1,length(value));
                 elseif (strcmp(field, 'constr_lbx_0'))
                     obj.model_struct.constr_lbx_0 = value;
@@ -239,7 +229,6 @@ classdef acados_ocp_model < handle
                     obj.model_struct.constr_ubx_0 = value;
                 elseif (strcmp(field, 'constr_Jbx_0'))
                     obj.model_struct.constr_Jbx_0 = value;
-
                 elseif (strcmp(field, 'constr_Jbx'))
                     obj.model_struct.constr_Jbx = value;
                 elseif (strcmp(field, 'constr_lbx'))
@@ -333,7 +322,6 @@ classdef acados_ocp_model < handle
 
             % dims
             elseif (strcmp(tokens{1}, 'dim'))
-
                 if (strcmp(field, 'dim_nx'))
                     obj.model_struct.dim_nx = value;
                 elseif (strcmp(field, 'dim_nu'))
@@ -391,7 +379,6 @@ classdef acados_ocp_model < handle
 
             % others
             else
-
                 if (strcmp(field, 'name'))
                     obj.model_struct.name = value;                    
                 elseif (strcmp(field, 'T'))
@@ -402,13 +389,5 @@ classdef acados_ocp_model < handle
                 end
             end    
         end
-
     end % methods
-    
-
-
-
-
 end % class
-
-

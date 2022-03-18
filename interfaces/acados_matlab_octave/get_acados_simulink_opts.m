@@ -32,9 +32,15 @@
 %
 
 function simulink_opts = get_acados_simulink_opts()
-    acados_folder = getenv('ACADOS_INSTALL_DIR');
+    tmp = load('acados_root_dir.mat');
+    if isempty(tmp)
+      error('acados cannot be found on MATLAB path')
+    else
+      acados_folder = tmp.root_dir;
+    end
     addpath(fullfile(acados_folder, 'external', 'jsonlab'))
-    simulink_opts_default_filename = fullfile(acados_folder, 'interfaces',...
-                            'acados_template','acados_template','simulink_default_opts.json');
+    simulink_opts_default_filename = fullfile(acados_folder, ...
+        'interfaces', 'acados_template', 'acados_template', ...
+        'simulink_default_opts.json');
     simulink_opts = loadjson(fileread(simulink_opts_default_filename));
 end

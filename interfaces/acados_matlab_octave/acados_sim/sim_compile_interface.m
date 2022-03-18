@@ -34,14 +34,23 @@
 function sim_compile_interface(opts)
 
 % get acados folder
-acados_folder = getenv('ACADOS_INSTALL_DIR');
+tmp = load('acados_root_dir.mat');
+if isempty(tmp)
+  error('acados cannot be found on MATLAB path')
+else
+  acados_folder = tmp.root_dir;
+end
 mex_flags = getenv('ACADOS_MEX_FLAGS');
 
 % set paths
-acados_mex_folder = fullfile(acados_folder, 'interfaces', 'acados_matlab_octave');
-acados_include = ['-I' acados_folder];
-acados_interfaces_include = ['-I' fullfile(acados_folder, 'interfaces')];
-acados_lib_path = ['-L' fullfile(acados_folder, 'lib')];
+acados_mex_folder = fullfile(acados_folder, 'interfaces', ...
+    'acados_matlab_octave', 'acados_sim');
+acados_include = {['-I', acados_folder], ...
+    ['-I', fullfile(acados_folder, 'interfaces')], ...
+    ['-I', fullfile(acados_folder, 'interfaces', ...
+    'acados_matlab_octave')], ...
+};
+acados_lib_path = ['-L', fullfile(acados_folder, 'lib')];
 
 mex_names = { ...
     'sim_create', ...
@@ -86,15 +95,15 @@ for ii=1:length(mex_files)
     disp(['compiling ', mex_files{ii}])
     if is_octave()
 %        mkoctfile -p CFLAGS
-        mex(acados_include, acados_interfaces_include, acados_lib_path,...
-            '-lacados', '-lhpipm', '-lblasfeo', mex_files{ii})
+        mex(acados_include, acados_lib_path, '-lacados', '-lhpipm', ...
+            '-lblasfeo', mex_files{ii})
     else
         FLAGS = 'CFLAGS=$CFLAGS -std=c99';
-        mex(mex_flags, FLAGS, acados_include, acados_interfaces_include, acados_lib_path, ...
-             '-lacados', '-lhpipm', '-lblasfeo', mex_files{ii}, '-outdir', opts.output_dir)
+        mex(mex_flags, FLAGS, acados_include{1}, acados_include{2}, ...
+            acados_include{3}, acados_lib_path, '-lacados', '-lhpipm', ...
+            '-lblasfeo', mex_files{ii}, '-outdir', opts.output_dir)
     end
 end
-
 
 if is_octave()
     octave_version = OCTAVE_VERSION();
@@ -106,7 +115,8 @@ if is_octave()
     for k=1:length(mex_names)
         clear(mex_names{k})
     %    [status, message] = movefile([mex_names{k}, '.', mexext], opts.output_dir)
-        [status, message] = copyfile([mex_names{k}, '.', mexext], opts.output_dir);
+        [status, message] = copyfile([mex_names{k}, '.', mexext], ...
+            opts.output_dir);
         delete([mex_names{k}, '.', mexext]);
     end
 end

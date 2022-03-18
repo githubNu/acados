@@ -41,8 +41,6 @@ function ocp_json = set_up_acados_ocp_nlp_json(obj, simulink_opts)
     ocp_json.dims.N = obj.opts_struct.param_scheme_N;
     ocp_json.solver_options.tf = model.T;
 
-    ocp_json.code_export_directory = fullfile(pwd, 'c_generated_code');
-
     if isfield(obj.opts_struct, 'Tsim')
         ocp_json.solver_options.Tsim = obj.opts_struct.Tsim;
     else
@@ -256,7 +254,6 @@ function ocp_json = set_up_acados_ocp_nlp_json(obj, simulink_opts)
         ocp_json.constraints.idxbx_0 = J_to_idx( model.constr_Jbx_0 );
     end
     ocp_json.constraints.idxbxe_0 = model.constr_idxbxe_0;
-
 
     % path
     if ocp_json.dims.nbx > 0
@@ -533,18 +530,15 @@ function ocp_json = set_up_acados_ocp_nlp_json(obj, simulink_opts)
     else
         error(['integrator ', obj.opts_struct.sim_method, ' not support for templating backend.'])
     end
-
     ocp_json.model.x = model.sym_x;
     ocp_json.model.u = model.sym_u;
     ocp_json.model.z = model.sym_z;
     ocp_json.model.xdot = model.sym_xdot;
     ocp_json.model.p = model.sym_p;
-
 end
 
 
-%% auxilary functions
-
+%% auxiliary functions
 function idx = J_to_idx(J)
     size_J = size(J);
     nrows = size_J(1);
@@ -560,7 +554,6 @@ function idx = J_to_idx(J)
         idx(i) = this_idx - 1; % store 0-based index
     end
 end
-
 
 function idx = J_to_idx_slack(J)
     size_J = size(J);

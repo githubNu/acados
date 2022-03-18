@@ -39,7 +39,9 @@ classdef acados_ocp_nlp_json < handle
         solver_options
         model
         parameter_values % initial value of the parameter
+        system_c_compiler
         acados_include_path
+        acados_path
         acados_lib_path
         problem_class
         simulink_opts
@@ -54,6 +56,7 @@ classdef acados_ocp_nlp_json < handle
             obj.solver_options = acados_template_mex.ocp_nlp_solver_options_json();
             obj.model = acados_template_mex.acados_model_json();
             obj.acados_include_path = [];
+            obj.acados_path = [];
             obj.acados_lib_path = [];
             obj.parameter_values = [];
             obj.problem_class = "OCP";

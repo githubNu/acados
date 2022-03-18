@@ -34,18 +34,28 @@
 function ocp_compile_interface(opts)
 
 % get acados folder
-acados_folder = getenv('ACADOS_INSTALL_DIR');
+tmp = load('acados_root_dir.mat');
+if isempty(tmp)
+  error('acados cannot be found on MATLAB path')
+else
+  acados_folder = tmp.root_dir;
+end
 mex_flags = getenv('ACADOS_MEX_FLAGS');
 
 % set paths
-acados_mex_folder = fullfile(acados_folder, 'interfaces', 'acados_matlab_octave');
-acados_include = ['-I', acados_folder];
-acados_interfaces_include = ['-I', fullfile(acados_folder, 'interfaces')];
+acados_mex_folder = fullfile(acados_folder, 'interfaces', ...
+    'acados_matlab_octave', 'acados_ocp');
+acados_include = {['-I', acados_folder], ...
+    ['-I', fullfile(acados_folder, 'interfaces')], ...
+    ['-I', fullfile(acados_folder, 'interfaces', ...
+    'acados_matlab_octave')], ...
+};
 external_include = ['-I', fullfile(acados_folder, 'external')];
-blasfeo_include = ['-I', fullfile(acados_folder, 'external', 'blasfeo', 'include')];
-hpipm_include = ['-I', fullfile(acados_folder, 'external', 'hpipm', 'include')];
+blasfeo_include = ['-I', fullfile(acados_folder, 'external', 'blasfeo', ...
+    'include')];
+hpipm_include = ['-I', fullfile(acados_folder, 'external', 'hpipm', ...
+    'include')];
 acados_lib_path = ['-L', fullfile(acados_folder, 'lib')];
-
 mex_names = { ...
     'ocp_create', ...
     'ocp_destroy', ...
@@ -115,9 +125,7 @@ if is_octave()
         setenv('LDFLAGS', libs.openmp);
         setenv('COMPFLAGS', libs.openmp);
     end
-
 end
-
 
 FLAGS = 'CFLAGS=$CFLAGS -std=c99';
 LDFLAGS = 'LDFLAGS=$LDFLAGS';
@@ -159,16 +167,20 @@ for ii=1:length(mex_files)
                 linker_flags{end+1} = libs.(fn{k});
             end
         end
-        % NOTE: multiple linker flags in 1 argument do not work in Matlab
-        mex(acados_include, acados_interfaces_include, external_include, blasfeo_include, hpipm_include,...
+        % NOTE: multiple linker flags in 1 argument do not work in matlab
+        mex(acados_include{1}, acados_include{2}, acados_include{3}, ...
+            external_include, blasfeo_include, hpipm_include,...
             acados_lib_path, linker_flags{:}, mex_files{ii})
     else
         % gcc uses FLAGS, LDFLAGS
         % MSVC uses COMPFLAGS, COMPDEFINES
         % NOTE: empty linker flags do not work in Octave
-        mex(mex_flags, FLAGS, LDFLAGS, COMPDEFINES, COMPFLAGS, acados_include, acados_interfaces_include, external_include, blasfeo_include, hpipm_include,...
-            acados_lib_path, '-lacados', '-lhpipm', '-lblasfeo', libs.qpoases,...
-            libs.qpdunes, libs.osqp, libs.hpmpc, libs.ooqp, mex_files{ii}, '-outdir', opts.output_dir)
+        mex(mex_flags, FLAGS, LDFLAGS, COMPDEFINES, COMPFLAGS, ...
+            acados_include{1}, acados_include{2}, acados_include{3}, ...
+            external_include, blasfeo_include, hpipm_include, ...
+            acados_lib_path, '-lacados', '-lhpipm', '-lblasfeo', ...
+            libs.qpoases, libs.qpdunes, libs.osqp, libs.hpmpc, ...
+            libs.ooqp, mex_files{ii}, '-outdir', opts.output_dir)
     end
 end
 
@@ -186,5 +198,3 @@ if is_octave()
         delete([mex_names{k}, '.', mexext]);
     end
 end
-
-

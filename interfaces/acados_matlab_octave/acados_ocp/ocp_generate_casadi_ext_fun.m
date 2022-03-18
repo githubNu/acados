@@ -36,7 +36,12 @@ function ocp_generate_casadi_ext_fun(model_struct, opts_struct)
 model_name = model_struct.name;
 
 % get acados folder
-acados_folder = getenv('ACADOS_INSTALL_DIR');
+tmp = load('acados_root_dir.mat');
+if isempty(tmp)
+  error('acados cannot be found on MATLAB path')
+else
+  acados_folder = tmp.root_dir;
+end
 
 % select files to compile
 c_files = {};
@@ -219,30 +224,41 @@ if use_msvc
         strjoin(unique(c_files_path), ' '), out_obj_dir, out_lib);
 
     % build
-    compile_command = sprintf('"%s" & %s', msvc_env, build_cmd);
-    compile_status = system(compile_command);
-    if compile_status ~= 0
+    cmd = sprintf('"%s" & %s', msvc_env, build_cmd);
+    status = system(cmd);
+    if status ~= 0
         error('Compilation of model functions failed! %s %s\n%s\n\n', ...
             'Please check the compile command above and the flags therein closely.',...
-            'Compile command was:', compile_command);
+            'Compile command was:', cmd);
     end
 else % gcc
     % set includes
-    acados_include = ['-I' acados_folder];
-    blasfeo_include = ['-I' fullfile(acados_folder, 'external' , 'blasfeo', 'include')];
+    acados_include = ['-I', acados_folder];
+    blasfeo_include = ['-I', fullfile(acados_folder, 'external' , ...
+        'blasfeo', 'include')];
 
-    if ispc
-        out_lib = fullfile(opts_struct.output_dir, ['lib', model_name, '.lib']);
+    if ispc==true
+        % windows
+        out_lib = fullfile(opts_struct.output_dir, ['lib', model_name, ...
+            '.lib']);
+        flags = ' -O2 ';
     else
-        out_lib = fullfile(opts_struct.output_dir, ['lib', model_name, '.so']);
+        % linux
+        out_lib = fullfile(opts_struct.output_dir, ['lib', model_name, ...
+            '.so']);
+        flags = ' -O2 -fPIC ';
     end
-    compile_command = ['gcc -O2 -fPIC -shared ', acados_include, ' ', blasfeo_include,...
-                       ' ', strjoin(unique(c_files_path), ' '), ' -o ', out_lib];
-    compile_status = system(compile_command);
-    if compile_status ~= 0
+    add_compiler_dir_to_system_path();
+    compiler_config = mex.getCompilerConfigurations('C');
+    gcc = fullfile(compiler_config.Location, 'bin', 'gcc');
+    cmd = [gcc, flags, ' -shared ', acados_include, ' ', ...
+        blasfeo_include, ' ', strjoin(unique(c_files_path), ' '), ...
+        ' -o ', out_lib];
+    status = system(cmd);
+    if status ~= 0
         error('Compilation of model functions failed! %s %s\n%s\n\n', ...
             'Please check the compile command above and the flags therein closely.',...
-            'Compile command was:', compile_command);
+            'Compile command was:', cmd);
     end
 end
 

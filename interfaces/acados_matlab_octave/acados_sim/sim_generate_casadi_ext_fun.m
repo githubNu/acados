@@ -68,18 +68,20 @@ elseif (strcmp(opts_struct.method, 'irk_gnsf'))
     c_files{end+1} = [model_name, '_dyn_gnsf_get_matrices_fun.c'];
     if ~model_struct.dyn_gnsf_purely_linear
         if model_struct.dyn_gnsf_nontrivial_f_LO
-            c_files{end+1} = [model_name, '_dyn_gnsf_f_lo_fun_jac_x1k1uz.c'];
+            c_files{end+1} = [model_name, ...
+                '_dyn_gnsf_f_lo_fun_jac_x1k1uz.c'];
         end
         c_files{end+1} = [model_name, '_dyn_gnsf_phi_fun.c'];
         c_files{end+1} = [model_name, '_dyn_gnsf_phi_fun_jac_y.c'];
         c_files{end+1} = [model_name, '_dyn_gnsf_phi_jac_y_uhat.c'];
     end
 else
-    fprintf('\nsim_generate_casadi_ext_fun: method not supported: %s\n', opts_struct.method);
+    fprintf(['\nsim_generate_casadi_ext_fun: method not supported: %s', ...
+        '\n'], opts_struct.method);
     return;
 end
 
-if (strcmp(opts_struct.codgen_model, 'true'))
+if strcmp(opts_struct.codgen_model, 'true')
 	for k=1:length(c_files)
 		movefile(c_files{k}, opts_struct.output_dir);
 	end
@@ -113,13 +115,22 @@ if use_msvc
     % build
     system(sprintf('"%s" & %s', msvc_env, build_cmd));
 else % gcc
-    if ispc
-        out_lib = fullfile(opts_struct.output_dir, ['lib', model_name, '.lib']);
+    if ispc==true
+        % windows
+        out_lib = fullfile(opts_struct.output_dir, ['lib', model_name, ...
+            '.lib']);
+        flags = ' -O2 ';
     else
-        out_lib = fullfile(opts_struct.output_dir, ['lib', model_name, '.so']);
+        % linux
+        out_lib = fullfile(opts_struct.output_dir, ['lib', model_name, ...
+            '.so']);
+        flags = ' -O2 -fPIC ';
     end
-    system(['gcc -O2 -fPIC -shared ', strjoin(unique(c_files_path), ' '), ' -o ', out_lib]);
+    add_compiler_dir_to_system_path();
+    compiler_config = mex.getCompilerConfigurations('C');
+    gcc = fullfile(compiler_config.Location, 'bin', 'gcc');
+    system([gcc, flags, ' -shared ', strjoin(unique(c_files_path), ...
+        ' '), ' -o ', out_lib]);
 end
 
 end
-

@@ -32,19 +32,14 @@
 %
 
 classdef acados_sim < handle
-
     properties
         C_sim
         C_sim_ext_fun
         model_struct
         opts_struct
     end % properties
-
-
-
+    
     methods
-
-
         function obj = acados_sim(model, opts)
             obj.model_struct = model.model_struct;
             obj.opts_struct = opts.opts_struct;
@@ -53,24 +48,29 @@ classdef acados_sim < handle
             addpath(obj.opts_struct.output_dir);
 
             % check model consistency
-            obj.model_struct = create_consistent_empty_fields(obj.model_struct, obj.opts_struct);
+            obj.model_struct = create_consistent_empty_fields( ...
+                obj.model_struct, obj.opts_struct);
+            
             % detect GNSF structure
             if (strcmp(obj.opts_struct.method, 'irk_gnsf'))
                 if (strcmp(obj.opts_struct.gnsf_detect_struct, 'true'))
-                    obj.model_struct = detect_gnsf_structure(obj.model_struct);
-                    generate_get_gnsf_structure(obj.model_struct, obj.opts_struct);
+                    obj.model_struct = detect_gnsf_structure( ...
+                        obj.model_struct);
+                    generate_get_gnsf_structure(obj.model_struct, ...
+                        obj.opts_struct);
                 else
-                    obj.model_struct = get_gnsf_structure(obj.model_struct);
+                    obj.model_struct = get_gnsf_structure( ...
+                        obj.model_struct);
                 end
             end
 
             % check if path contains spaces
             if ~isempty(strfind(obj.opts_struct.output_dir, ' '))
-                error(strcat('acados_ocp: Path should not contain spaces, got: ',...
-                    obj.opts_struct.output_dir));
+                error(strcat(['acados_ocp: Path should not contain ', ...
+                    'spaces, got: '], obj.opts_struct.output_dir));
             end
 
-            %% compile mex without model dependency
+            % compile mex without model dependency
             % check if mex interface exists already
             if strcmp(obj.opts_struct.compile_interface, 'true')
                 compile_interface = true;
@@ -82,49 +82,48 @@ classdef acados_sim < handle
                 else
                     extension = ['.' mexext];
                 end
-                compile_interface = ~exist(fullfile(obj.opts_struct.output_dir, ['/sim_create', extension]), 'file');
+                compile_interface = ~exist(fullfile(obj.opts_struct.output_dir, ['sim_create', extension]), 'file');
             else
                 obj.model_struct.cost_type
                 error('acados_sim: field compile_interface is , supported values are: true, false, auto');
             end
-
-            if ( compile_interface )
+            if compile_interface==true
                 sim_compile_interface(obj.opts_struct);
             end
-
             obj.model_struct = detect_dims_sim(obj.model_struct);
 
             % create C object
             obj.C_sim = sim_create(obj.model_struct, obj.opts_struct);
 
             % generate and compile casadi functions
-            if (strcmp(obj.opts_struct.codgen_model, 'true') || strcmp(obj.opts_struct.compile_model, 'true'))
-                sim_generate_casadi_ext_fun(obj.model_struct, obj.opts_struct)
+            generate_model = strcmp(obj.opts_struct.codgen_model, 'true');
+            compile_model = strcmp(obj.opts_struct.compile_model, 'true');
+            if generate_model==true || compile_model==true
+                sim_generate_casadi_ext_fun(obj.model_struct, ...
+                    obj.opts_struct)
             end
-
             obj.C_sim_ext_fun = sim_create_ext_fun();
 
-            % compile mex with model dependency & set pointers for external functions in model
-            obj.C_sim_ext_fun = sim_set_ext_fun(obj.C_sim, obj.C_sim_ext_fun, obj.model_struct, obj.opts_struct);
+            % compile mex with model dependency & set pointers for external
+            % functions in model
+            obj.C_sim_ext_fun = sim_set_ext_fun(obj.C_sim, ...
+                obj.C_sim_ext_fun, obj.model_struct, obj.opts_struct);
 
             % precompute
             sim_precompute(obj.C_sim);
-
         end
-
 
         function set(obj, field, value)
             if ~isa(field, 'char')
                 error('field must be a char vector, use '' ''');
             end
-            sim_set(obj.model_struct, obj.opts_struct, obj.C_sim, obj.C_sim_ext_fun, field, value);
+            sim_set(obj.model_struct, obj.opts_struct, obj.C_sim, ...
+                obj.C_sim_ext_fun, field, value);
         end
-
 
         function status = solve(obj)
             status = sim_solve(obj.C_sim);
         end
-
 
         function value = get(obj, field)
             if ~isa(field, 'char')
@@ -132,7 +131,6 @@ classdef acados_sim < handle
             end
             value = sim_get(obj.C_sim, field);
         end
-
 
         function delete(obj)
             if ~isempty(obj.C_sim_ext_fun)
@@ -142,11 +140,5 @@ classdef acados_sim < handle
                 sim_destroy(obj.C_sim);
             end
         end
-
-
     end % methods
-
-
-
 end % class
-

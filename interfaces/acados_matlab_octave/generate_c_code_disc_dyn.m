@@ -32,13 +32,13 @@
 %
 
 
-function generate_c_code_disc_dyn( model, opts )
+function generate_c_code_disc_dyn(model, codegendir, opts)
 
 %% import casadi
 import casadi.*
 
 casadi_version = CasadiMeta.version();
-if ( strcmp(casadi_version(1:3),'3.4') || strcmp(casadi_version(1:3),'3.5')) % require casadi 3.4.x
+if (strcmp(casadi_version(1:3), '3.4') || strcmp(casadi_version(1:3), '3.5')) % require casadi 3.4.x
     casadi_opts = struct('mex', false, 'casadi_int', 'int', 'casadi_real', 'double');
 else % old casadi versions
     error('Please provide CasADi version 3.4 or 3.5 to ensure compatibility with acados')
@@ -108,10 +108,11 @@ end
 model_name = model.name;
 
 if is_template
-    if ~exist( fullfile(pwd,'c_generated_code'), 'dir')
-        mkdir('c_generated_code');
+    currentdir = pwd();
+    if ~exist(codegendir, 'dir')
+        mkdir(codegendir);
     end
-    cd 'c_generated_code'
+    cd(codegendir)
     model_dir = [model_name, '_model'];
     if ~exist(fullfile(pwd, model_dir), 'dir')
         mkdir(model_dir);
@@ -151,7 +152,7 @@ if strcmp(model.dyn_ext_fun_type, 'casadi')
 end
 
 if is_template
-    cd '../..'
+    cd(currentdir);
 end
 
 end
