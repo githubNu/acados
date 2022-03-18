@@ -50,14 +50,14 @@
 {% if simulink_opts.samplingtime == "t0" -%}
 #define SAMPLINGTIME {{ solver_options.time_steps[0] }}
 {%- elif simulink_opts.samplingtime == "-1" -%}
-#define SAMPLINGTIME -1
+#define SAMPLINGTIME INHERITED_SAMPLE_TIME
 {%- else -%}
   {{ throw(message = "simulink_opts.samplingtime must be '-1' or 't0', got val") }}
 {%- endif %}
 
 static void mdlInitializeSizes (SimStruct *S)
 {
-    // specify the number of continuous and discrete states
+    /* Specify the number of continuous and discrete states */
     ssSetNumContStates(S, 0);
     ssSetNumDiscStates(S, 0);
 
@@ -141,11 +141,11 @@ static void mdlInitializeSizes (SimStruct *S)
     {%- set n_inputs = n_inputs + 1 -%}
   {%- endif -%}
 
-    // specify the number of input ports
+    /* Specify the number of input ports */
     if ( !ssSetNumInputPorts(S, {{ n_inputs }}) )
         return;
 
-    // specify the number of output ports
+    /* Specify the number of output ports */
     {%- set_global n_outputs = 0 %}
     {%- for key, val in simulink_opts.outputs %}
       {%- if val == 1 %}
@@ -157,7 +157,7 @@ static void mdlInitializeSizes (SimStruct *S)
     if ( !ssSetNumOutputPorts(S, {{ n_outputs }}) )
         return;
 
-    // specify dimension information for the input ports
+    /* Specify dimension information for the input ports */
     {%- set i_input = -1 %}{# note here i_input is 0-based #}
   {%- if dims.nbx_0 > 0 and simulink_opts.inputs.lbx_0 -%}  {#- lbx_0 #}
     {%- set i_input = i_input + 1 %}
@@ -280,7 +280,7 @@ static void mdlInitializeSizes (SimStruct *S)
     ssSetInputPortVectorDimension(S, {{ i_input }}, {{ dims.nu * (dims.N) }});
   {%- endif -%}
 
-    /* specify dimension information for the OUTPUT ports */
+    /* Specify dimension information for the OUTPUT ports */
     {%- set i_output = -1 %}{# note here i_output is 0-based #}
   {%- if dims.nu > 0 and simulink_opts.outputs.u0 == 1 %}
     {%- set i_output = i_output + 1 %}
@@ -337,7 +337,8 @@ static void mdlInitializeSizes (SimStruct *S)
     ssSetOutputPortVectorDimension(S, {{ i_output }}, 1 );
   {%- endif %}
 
-    // specify the direct feedthrough status
+
+    /* Specify the direct feedthrough status */
     // should be set to 1 for all inputs used in mdlOutputs
     {%- for i in range(end=n_inputs) %}
     ssSetInputPortDirectFeedThrough(S, {{ i }}, 1);
@@ -371,7 +372,7 @@ static void mdlSetOutputPortDimensionInfo(SimStruct *S, int_T port, const DimsIn
 static void mdlInitializeSampleTimes(SimStruct *S)
 {
     ssSetSampleTime(S, 0, SAMPLINGTIME);
-    ssSetOffsetTime(S, 0, 0.0);
+    ssSetOffsetTime(S, 0, FIXED_IN_MINOR_STEP_OFFSET);
 }
 
 
