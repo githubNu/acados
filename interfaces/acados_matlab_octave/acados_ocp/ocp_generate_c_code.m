@@ -31,9 +31,10 @@
 % POSSIBILITY OF SUCH DAMAGE.;
 %
 
-function ocp_generate_c_code(obj, output_dir)
+function ocp_generate_c_code(obj)
     %% create folder
-    codegendir = fullfile(pwd(), output_dir, 'c_generated_code');
+    codegendir = fullfile(pwd(), obj.opts_struct.output_dir, ...
+        'c_generated_code');
     if ~exist(codegendir, 'dir')
         mkdir(codegendir)
     end

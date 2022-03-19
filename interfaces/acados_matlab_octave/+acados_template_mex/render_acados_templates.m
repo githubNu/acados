@@ -244,9 +244,10 @@ function render_file(json_fullfile, template_dir, template_file, out_file, t_ren
 
     [status, result] = system(os_cmd);
     if status~=0
-        cd ..
-        error('rendering %s failed.\n command: %s\n returned status %d, got result:\n%s\n\n',...
-            template_file, os_cmd, status, result);
+        cd('..')
+        error(['rendering %s failed.\n command: %s\n returned status ', ...
+            '%d, got result:\n%s\n\n'], template_file, os_cmd, status, ...
+            result);
     end
     % NOTE: this should return status != 0, maybe fix in tera renderer?
     if ~isempty(strfind(result, 'Error')) % contains not implemented in Octave

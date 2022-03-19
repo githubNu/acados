@@ -212,15 +212,17 @@ methods
         ocp_solve(obj.C_ocp);
     end
 
-    function generate_c_code(obj, output_dir, samplingtime)
-        simulink_opts = get_acados_simulink_opts();
-        if nargin == 3; simulink_opts.samplingtime = samplingtime; end
+    function generate_c_code(obj, simulink_opts)
+        if nargin<2
+            simulink_opts = get_acados_simulink_opts();
+        end
+        
         % set up acados_ocp_nlp_json
         obj.acados_ocp_nlp_json = set_up_acados_ocp_nlp_json(obj, ...
             simulink_opts);
         
         % render templated code
-        ocp_generate_c_code(obj, output_dir)
+        ocp_generate_c_code(obj)
     end
 
     function eval_param_sens(obj, field, stage, index)
