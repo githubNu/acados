@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 # Minimal example showing how to reuse the exported c-code with
 # different time-steps.
 #
@@ -136,7 +137,7 @@ status = ocp_solver.solve()
 
 if status != 0:
     ocp_solver.print_statistics()  # encapsulates: stat = ocp_solver.get_stats("statistics")
-    raise Exception('acados returned status {}. Exiting.'.format(status))
+    raise Exception(f'acados returned status {status}.')
 
 # get solution
 for i in range(N0):
@@ -173,7 +174,7 @@ status = ocp_solver.solve()
 
 if status != 0:
     ocp_solver.print_statistics()  # encapsulates: stat = ocp_solver.get_stats("statistics")
-    raise Exception('acados returned status {}. Exiting.'.format(status))
+    raise Exception(f'acados returned status {status}.')
 
 # get solution
 for i in range(N12):
@@ -208,7 +209,7 @@ status = ocp_solver.solve()
 
 if status != 0:
     ocp_solver.print_statistics()  # encapsulates: stat = ocp_solver.get_stats("statistics")
-    raise Exception('acados returned status {}. Exiting.'.format(status))
+    raise Exception(f'acados returned status {status}.')
 
 # get solution
 for i in range(N12):

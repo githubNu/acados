@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 #
 # Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
 # Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
@@ -165,7 +166,7 @@ if __name__ == "__main__":
     status = ocp_solver.solve()
 
     if status != 0:
-        raise Exception('acados returned status {}. Exiting.'.format(status))
+        raise Exception(f'acados returned status {status}.')
 
     # get solution
     for i in range(N):

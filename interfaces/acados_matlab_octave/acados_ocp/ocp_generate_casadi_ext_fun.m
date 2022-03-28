@@ -211,6 +211,8 @@ if ~is_octave()
     end
 end
 
+ext_fun_compile_flags = opts_struct.ext_fun_compile_flags;
+
 if use_msvc
     % get env vars for MSVC
     msvc_env = fullfile(mexOpts.Location, 'VC\Auxiliary\Build\vcvars64.bat');
@@ -231,6 +233,7 @@ if use_msvc
             'Please check the compile command above and the flags therein closely.',...
             'Compile command was:', cmd);
     end
+    cmd = sprintf('"%s" & %s', msvc_env, build_cmd);
 else % gcc
     % set includes
     acados_include = ['-I', acados_folder];
@@ -251,15 +254,16 @@ else % gcc
     add_compiler_dir_to_system_path();
     compiler_config = mex.getCompilerConfigurations('C');
     gcc = fullfile(compiler_config.Location, 'bin', 'gcc');
-    cmd = [gcc, flags, ' -shared ', acados_include, ' ', ...
+    cmd = [gcc, [flags, ext_fun_compile_flags], ' -shared ', acados_include, ' ', ...
         blasfeo_include, ' ', strjoin(unique(c_files_path), ' '), ...
         ' -o ', out_lib];
-    status = system(cmd);
-    if status ~= 0
-        error('Compilation of model functions failed! %s %s\n%s\n\n', ...
-            'Please check the compile command above and the flags therein closely.',...
-            'Compile command was:', cmd);
-    end
+end
+
+status = system(cmd);
+if status ~= 0
+    error('Compilation of model functions failed! %s %s\n%s\n\n', ...
+        'Please check the compile command above and the flags therein closely.',...
+        'Compile command was:', cmd);
 end
 
 end

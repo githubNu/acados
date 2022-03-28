@@ -1,3 +1,4 @@
+# -*- coding: future_fstrings -*-
 #
 # Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
 # Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
@@ -163,7 +164,7 @@ def main(discretization='shooting_nodes'):
     status = ocp_solver.solve()
 
     if status not in [0, 2]:
-        raise Exception('acados returned status {}. Exiting.'.format(status))
+        raise Exception(f'acados returned status {status}.')
 
     # get primal solution
     for i in range(N):
